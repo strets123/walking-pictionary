@@ -1,0 +1,95 @@
+<!DOCTYPE HTML>
+
+<html>
+   <head>
+      
+      <script type = "text/javascript">
+         function WebSocketTest() {
+            let orient = "android.sensor.orientation";
+            let step = "android.sensor.step_detector";
+            if ("WebSocket" in window) {
+                alert("WebSocket is supported by your Browser!");
+               
+               // Let us open a web socket
+               var ws = new WebSocket('ws://192.168.1.77:8080/sensors/connect?types=["' + orient + '","' + step + '"]'); //sensor/connect?type=android.sensor.step_detector
+				
+               ws.onopen = function() {
+                  
+                  // Web Socket is connected, send data using send()
+                  ws.send("Message to send");
+                  alert("Message is sent...");
+               };
+
+               var myCanvas = document.getElementById("myCanvas");
+               var ctx = myCanvas.getContext("2d");
+               var startingXPosition = myCanvas.width/2;  // center of canvas
+               var startingYPosition = myCanvas.height/2; // center of canvas
+               let orientation = 0;
+
+                const drawline = function () {
+                  
+
+                  
+                  var length = 50; 
+
+                  lineAtAngle(startingXPosition, startingYPosition, length, orientation, ctx); 
+
+                  function lineAtAngle(x1, y1, length, angle, canvas) {    
+                     canvas.moveTo(x1, y1);  
+                     radians = angle * (Math.PI/180);     
+                     x2 = x1 + Math.cos(radians ) * length;	 
+                     y2 = y1 + Math.sin(radians ) * length;	   
+                     canvas.lineTo(x2, y2);       
+                     canvas.stroke();
+                     startingXPosition = x2;
+                     startingYPosition = y2;
+                  }
+                  
+                }
+				
+               ws.onmessage = function (evt) { 
+                  var received_leahsmsg = JSON.parse(evt.data);
+         //         alert("Message is received...");
+                  if(received_leahsmsg.type == step){
+                     console.log(received_leahsmsg);
+                     drawline();
+                  } else if (received_leahsmsg.type == orient) {
+                     orientation = received_leahsmsg.values[0];
+                  }
+
+                    
+                  
+               };
+				
+               ws.onclose = function() { 
+                  
+                  // websocket is closed.
+                  alert("Connection is closed..."); 
+               };
+            } else {
+              
+               // The browser doesn't support WebSocket
+               alert("WebSocket NOT supported by your Browser!");
+            }
+         }
+
+         function degToCompass(num) {
+            var val = Math.floor((num / 22.5) + 0.5);
+            var arr = ["N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE", "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW"];
+            return arr[(val % 16)];
+        }
+      </script>
+		
+   </head>
+   
+   <body>
+      <div id = "sse">
+        <h1 id="directions"></h1>
+        <a href = "javascript:WebSocketTest()">Run WebSocket</a>
+         <canvas id="myCanvas" width="1600" height="800"
+         style="border:1px solid #000000;">
+         </canvas> 
+      </div>
+      
+   </body>
+</html>
